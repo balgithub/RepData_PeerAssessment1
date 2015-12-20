@@ -10,7 +10,8 @@ output: html_document
 ---
 
 Section 0: Clear the environment by removing any exisitng environment variables
-```{r setup, message=FALSE}
+
+```r
 #Remove any exisiting environment variables
 rm(list = ls(all = TRUE)) 
 
@@ -33,19 +34,32 @@ The variables included in this dataset are:
 3. **interval**: Identifier for the 5-minute interval in which measurement was taken
 
 Step 1.1: Load the data using the read.csv() method.
-```{r Step-1.1}
+
+```r
 activityData <- read.csv('activity.csv', header = T)
 ```
 
 Step 1.2: Process/transform the data (if necessary) into a format suitable for your analysis
-```{r Step-1.2}
+
+```r
 activityData$date <- ymd(activityData$date)
 activityDT <- data.table(activityData)
 ```
 
 Step 1.3: Take a quick peek at the dataset
-```{r Step-1.3}
+
+```r
 head(activityData)
+```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
 ```
 
 
@@ -58,7 +72,8 @@ head(activityData)
 Section 2: Create a histogram displaying the total number of steps taken each day and calculate the mean and median:
 
 Step 2.0: Summarize the data by day grouping
-```{r Step-2.0}
+
+```r
 activityDailyGrouping <- group_by(activityData, date)
 activitySummary <- summarise(activityDailyGrouping,
                               total = sum(steps, na.rm = TRUE),
@@ -67,7 +82,27 @@ activitySummary <- summarise(activityDailyGrouping,
 
 #Take a peek at the data
 activitySummary
+```
 
+```
+## Source: local data frame [61 x 4]
+## 
+##          date total  average median
+##        (time) (int)    (dbl)  (dbl)
+## 1  2012-10-01     0      NaN     NA
+## 2  2012-10-02   126  0.43750      0
+## 3  2012-10-03 11352 39.41667      0
+## 4  2012-10-04 12116 42.06944      0
+## 5  2012-10-05 13294 46.15972      0
+## 6  2012-10-06 15420 53.54167      0
+## 7  2012-10-07 11015 38.24653      0
+## 8  2012-10-08     0      NaN     NA
+## 9  2012-10-09 12811 44.48264      0
+## 10 2012-10-10  9900 34.37500      0
+## ..        ...   ...      ...    ...
+```
+
+```r
 #Calculate the mean and median values and save for later
 meanVal <- mean(activitySummary$total, na.rm=TRUE)
 medianVal <- median(activitySummary$total, na.rm=TRUE)
@@ -77,7 +112,8 @@ Step 2.1: Create a reusable histogram function for the total number of Steps per
 
 **Please see the legend for the reported Mean and Median values**
 
-```{r Step-2.1}
+
+```r
 stepsHist <- function(vec, title, avg, med){
   hist(vec, 
     breaks = 20,
@@ -103,10 +139,16 @@ stepsHist <- function(vec, title, avg, med){
 stepsHist(activitySummary$total, 'Number of Steps Taken Per Day', meanVal, medianVal)
 ```
 
+![plot of chunk Step-2.1](figure/Step-2.1-1.png) 
+
 Step 2.2: Report the Mean and Median values
-```{r Step-2.2, echo=FALSE}
-cat('Mean number of steps:', meanVal)
-cat('Median number of steps:', medianVal)
+
+```
+## Mean number of steps: 9354.23
+```
+
+```
+## Median number of steps: 10395
 ```
 
 
@@ -123,7 +165,8 @@ cat('Median number of steps:', medianVal)
 2.  Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
 Step 3.0: Summarize the dataset by interval & find the maximum steps value
-```{r Step-3.0}
+
+```r
 ##Summarize the dataset by interval
 activityIntervalSummary <- activityDT[, list(avgSteps = mean(steps, na.rm = T)), by = interval]
 
@@ -132,7 +175,8 @@ maximumSteps <- activityIntervalSummary[which.max(avgSteps), ]
 ```
 
 Step 3.1: Plot the interval graph
-```{r Step-3.1}
+
+```r
 ##Plot the interval graph
 with(activityIntervalSummary, {
   plot(interval, 
@@ -151,12 +195,14 @@ points(maximumSteps$interval, maximumSteps$avgSteps, col = 'blue', lwd = 4, pch 
 
 #Finally, add the legend to the plot
 legend("topright", legend = maxLabel, text.col = 'blue', bty = 'n')
-     
 ```
 
+![plot of chunk Step-3.1](figure/Step-3.1-1.png) 
+
 Step 3.2: Report the interval which holds the max average steps
-```{r Step-3.2, echo=FALSE}
-cat(paste('The maximum # of steps (', round(maximumSteps$avgSteps, 2), ') was found on the ', maximumSteps$interval, 'th time interval', sep = ''))
+
+```
+## The maximum # of steps (206.17) was found on the 835th time interval
 ```
 
 
@@ -184,12 +230,18 @@ Section 4: Create a histogram with imputed values that displays the total number
 
 
 Step 4.1: Find and report the total number of rows with NAs
-```{r Step-4.1}
+
+```r
 cat('The number of NAs:', sum(is.na(activityData$steps)))
 ```
 
+```
+## The number of NAs: 2304
+```
+
 Step 4.2: Devise a strategy to impute the missing values
-```{r Step-4.2}
+
+```r
 replaceIfNA <- function(a,b){
   if(is.na(a)){
     return(b)
@@ -199,7 +251,8 @@ replaceIfNA <- function(a,b){
 ```
 
 Step 4.3: Create a new dataset with missing data filled in
-```{r Step-4.3}
+
+```r
 #Align the original dataset with the Activity Interval Summary dataset created earlier
 setkey(activityDT, interval)
 setkey(activityIntervalSummary, interval)
@@ -214,14 +267,29 @@ activityWithMissingValuesDT$newSteps <- mapply(replaceIfNA,
 head(activityWithMissingValuesDT)
 ```
 
+```
+##    steps       date interval avgSteps  newSteps
+## 1:    NA 2012-10-01        0 1.716981  1.716981
+## 2:     0 2012-10-02        0 1.716981  0.000000
+## 3:     0 2012-10-03        0 1.716981  0.000000
+## 4:    47 2012-10-04        0 1.716981 47.000000
+## 5:     0 2012-10-05        0 1.716981  0.000000
+## 6:     0 2012-10-06        0 1.716981  0.000000
+```
+
 Step 4.4: Generate the histogram using the imputed values and calculate the mean and median
-```{r Step-4.4}
+
+```r
 #Summarize new dataset by day
 actMissingSummary <- activityWithMissingValuesDT[, list(newSteps = sum(newSteps, na.rm = T)), by = date]
 
 #Regenerate the original histogram for side-by-side comparison
 stepsHist(activitySummary$total, 'Missing Values Removed', meanVal, medianVal)
+```
 
+![plot of chunk Step-4.4](figure/Step-4.4-1.png) 
+
+```r
 #Calculate the new Mean and Median values using the imputed values
 meanVal <- mean(actMissingSummary$newSteps, na.rm=TRUE)
 medianVal <- median(actMissingSummary$newSteps, na.rm=TRUE)
@@ -230,10 +298,16 @@ medianVal <- median(actMissingSummary$newSteps, na.rm=TRUE)
 stepsHist(actMissingSummary$newSteps, 'Missing Values Replaced with Mean For Interval', meanVal, medianVal)
 ```
 
+![plot of chunk Step-4.4](figure/Step-4.4-2.png) 
+
 Step 4.5: Report the Mean and Median values
-```{r Step-4.5, echo=FALSE}
-cat('Mean number of steps:', meanVal)
-cat('Median number of steps:', medianVal)
+
+```
+## Mean number of steps: 10766.19
+```
+
+```
+## Median number of steps: 10766.19
 ```
 
 Reviewing this imputed data, the following concerns have been asked and answered:
@@ -258,7 +332,8 @@ Reviewing this imputed data, the following concerns have been asked and answered
 Section 5: Explore differences between weekday and weekend data
 
 Step 5.0: Create function to partition weekend from weekday data
-```{r Step-5.0}
+
+```r
 isWeekend <- function(d){
   if(d %in% c('Saturday', 'Sunday')){
     return('Weekend')
@@ -268,7 +343,8 @@ isWeekend <- function(d){
 ```
 
 Step 5.1: Add a new factor variable indicating whether the day is a weekend or not
-```{r Step-5.1}
+
+```r
 #Add the name of the day to dataset
 activityWithMissingValuesDT$dayname <- weekdays(as.Date(activityWithMissingValuesDT$date))
 
@@ -282,11 +358,22 @@ actMissingSummary <- activityWithMissingValuesDT[, list(avgSteps = mean(newSteps
 str(actMissingSummary)
 ```
 
+```
+## Classes 'data.table' and 'data.frame':	576 obs. of  3 variables:
+##  $ interval: int  0 0 5 5 10 10 15 15 20 20 ...
+##  $ daytype : Factor w/ 2 levels "Weekday","Weekend": 1 2 1 2 1 2 1 2 1 2 ...
+##  $ avgSteps: num  2.2512 0.2146 0.4453 0.0425 0.1732 ...
+##  - attr(*, ".internal.selfref")=<externalptr>
+```
+
 Step 5.2: Lastly, generate the plot
-```{r Step-5.2}
+
+```r
 xyplot(avgSteps~interval | daytype, data = actMissingSummary,
       type = 'l',
       xlab = 'Interval',
       ylab = 'Number of Steps',
       layout = c(1,2))
 ```
+
+![plot of chunk Step-5.2](figure/Step-5.2-1.png) 
